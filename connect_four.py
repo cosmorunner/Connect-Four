@@ -14,40 +14,54 @@ class ConnectFour:
 
         for row in self.rows:
             for col in self.cols:
-                self.fields.append(Field(self, col, row))
+                self.fields.append(Field(col, row))
 
         self.start()
 
     def start(self):
-        self.print_board()
+        counter = 0
+        while counter < 5:
+            self.print_board()
+            counter += 1
+            position = input('Place your next token: ')
+            self.place_token(position)
+
+    def place_token(self, position):
+        col = position[:1]
+        row = position[1:]
+
+        for field in self.fields:
+            if field.col == col and field.row == int(row):
+                field.state = 'X'
 
     def print_board(self):
         print('')
-        for field in self.fields:
-            field.print()
+        for row in self.rows:
+            print(str(row) + '| ', end='')
+            items = list(filter(lambda e: e.row == row, self.fields))
+            for ele in items:
+                print(ele.state, end=' ')
+            print('')
 
-        print('   - - - - - - - -')
         print('   ', end='')
+
         for col in self.cols:
             print(col, end=' ')
 
+        print('')
+
 
 class Field:
-    def __init__(self, game, col, row):
-        self.game = game
+    def __init__(self, col, row):
         self.col = col
         self.row = row
-        self.startCol = True if col == game.cols[0] else False
-        self.endCol = True if col == game.cols[-1] else False
-        self.state = 0
+        self.state = ' '
+
+    def __repr__(self):
+        return 'Field(%s, %s, %s)' % (self.col, self.row, self.state)
 
     def print(self):
-        if self.startCol:
-            print(str(self.row) + '| ' + str(self.state), end=' ')
-        elif self.endCol:
-            print(self.state)
-        else:
-            print(self.state, end=' ')
+        print(self.state, end='')
 
 
 def init():
