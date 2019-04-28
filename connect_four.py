@@ -1,5 +1,5 @@
-from argparse import ArgumentParser
 import logging
+from argparse import ArgumentParser
 
 logger = logging.getLogger('cf')
 
@@ -12,7 +12,6 @@ class ConnectFour:
         self.fields = []
         self.rows = [6, 5, 4, 3, 2, 1]
         self.cols = ['A', 'B', 'C', 'D', 'E', 'F', 'G', 'H']
-
         for row in self.rows:
             for col in self.cols:
                 self.fields.append(Field(col, row))
@@ -20,23 +19,91 @@ class ConnectFour:
         self.start()
 
     def start(self):
-        counter = 0
-        while counter < 3:
+        while self.game_continues():
             current_player = self.current_turn
             self.print_board()
             while current_player == self.current_turn:
                 position = input(self.players[self.current_turn] + ', place your next token: ')
+                if position == 'quit':
+                    quit()
+
                 try:
                     self.place_token(position)
                     self.switch_current_player()
-                    counter += 1
+
                 except ValueError as err:
                     print(getattr(err, 'message', str(err)))
 
+        self.switch_current_player()
+        self.print_board()
+        print('Congratulations, ' + self.get_player() + ', you won!')
+
+    def game_continues(self):
+        placed_tokens = list(filter(lambda e: e.state != ' ', self.fields))
+        # minimum number of tokens required
+        if len(placed_tokens) < 1:
+            return True
+
+        for field in self.fields:
+            if field.state == '':
+                continue
+
+            col_index = self.cols.index(field.col)
+            check_against = []
+
+            # check vertical chain
+            try:
+                check_vert = [self.get_field(field.col, field.row + 1),
+                              self.get_field(field.col, field.row + 2),
+                              self.get_field(field.col, field.row + 3)]
+                check_against.append(check_vert)
+            except ValueError:
+                pass
+
+            # check horizontal chain
+            try:
+                check_vert = [self.get_field(self.cols[col_index + 1], field.row),
+                              self.get_field(self.cols[col_index + 2], field.row),
+                              self.get_field(self.cols[col_index + 3], field.row)]
+                check_against.append(check_vert)
+            except ValueError:
+                pass
+            except IndexError:
+                pass
+
+            # check ascending diagonal chain
+            try:
+                check_vert = [self.get_field(self.cols[col_index + 1], field.row + 1),
+                              self.get_field(self.cols[col_index + 2], field.row + 2),
+                              self.get_field(self.cols[col_index + 3], field.row + 3)]
+                check_against.append(check_vert)
+            except ValueError:
+                pass
+            except IndexError:
+                pass
+
+            # check descending diagonal chain
+            try:
+                check_vert = [self.get_field(self.cols[col_index + 1], field.row - 1),
+                              self.get_field(self.cols[col_index + 2], field.row - 2),
+                              self.get_field(self.cols[col_index + 3], field.row - 3)]
+                check_against.append(check_vert)
+            except ValueError:
+                pass
+            except IndexError:
+                pass
+
+            for chain in check_against:
+                print(chain)
+                if chain[0].state == field.state and chain[1].state == field.state and chain[2].state == field.state:
+                    return False
+
+        return True
+
     def place_token(self, position):
-        position_obj = self.convert_position(position)
-        field = self.get_field(position_obj['col'], position_obj['row'])
-        self.validate_position(position_obj['col'], position_obj['row'])
+        pos_obj = self.convert_position(position)
+        field = self.get_field(pos_obj['col'], pos_obj['row'])
+        self.validate_position(field)
         field.state = self.symbols[self.current_turn]
 
     def convert_position(self, position):
@@ -53,25 +120,15 @@ class ConnectFour:
                 return field
         raise ValueError('Position ' + col + str(row) + ' does not exist.')
 
-    def get_open_fields(self):
-        fields = []
-        # Filter blocked fields
-        for field in self.fields:
-            if field.state == ' ':
-                fields.append(field)
-        for col in self.cols:
-            col_fields = list(filter(lambda e: e.col == col, fields))
-            sorted_col_fields = sorted(col_fields, key=lambda x: x.row)
-            fields.append(sorted_col_fields[0])
-        return fields
+    def validate_position(self, field):
+        if field.state != ' ':
+            raise ValueError(
+                'Position ' + field.col + str(field.row) + ' is already taken. Please choose another position.')
 
-    def validate_position(self, col, row):
-        open_fields = self.get_open_fields()
-
-        for field in open_fields:
-            if str(field.col) == col and int(field.row) == row and field.state == ' ':
-                return field
-        raise ValueError('Position ' + col + str(row) + ' is already taken. Please choose another position.')
+        open_col_fields = list(filter(lambda e: e.col == field.col and e.state == ' ', self.fields))
+        sorted_col_fields = sorted(open_col_fields, key=lambda x: x.row)
+        if sorted_col_fields[0].row != field.row:
+            raise ValueError('Position ' + field.col + str(field.row) + ' is invalid. Please choose another position.')
 
     def print_board(self):
         print('')
@@ -83,7 +140,6 @@ class ConnectFour:
             print('')
 
         print('   ', end='')
-
         for col in self.cols:
             print(col, end=' ')
 
@@ -91,6 +147,9 @@ class ConnectFour:
 
     def switch_current_player(self):
         self.current_turn = 2 if self.current_turn == 1 else 1
+
+    def get_player(self):
+        return self.players[self.current_turn]
 
 
 class Field:
