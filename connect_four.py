@@ -34,9 +34,9 @@ class ConnectFour:
                 except ValueError as err:
                     print(getattr(err, 'message', str(err)))
 
-        # switch again to player that placed winning token.
-        self.switch_current_player()
         self.print_board()
+        # switch again to player that placed the winning token.
+        self.switch_current_player()
         print('Congratulations, ' + self.get_player() + ', you won!')
 
     def game_continues(self):
@@ -98,11 +98,17 @@ class ConnectFour:
                 if chain[0].state == field.state and chain[1].state == field.state and chain[2].state == field.state:
                     return False
 
+            # draw, because there are no open fields left
+            if len(placed_tokens) == len(self.fields):
+                print('Draw! Wooooooow!')
+                quit()
+
         return True
 
     def place_token(self, column):
         field = self.get_next_field_by_col(column.upper())
         field.state = self.symbols[self.current_turn]
+        print('Last column: ' + field.col.upper())
 
     def get_next_field_by_col(self, col):
         try:
