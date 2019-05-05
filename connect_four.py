@@ -45,7 +45,7 @@ class ConnectFour:
             return True
 
         for field in self.fields:
-            if field.state == '':
+            if field.state == ' ':
                 continue
 
             col_index = self.cols.index(field.col)
@@ -94,7 +94,6 @@ class ConnectFour:
                 pass
 
             for chain in check_against:
-                print(chain)
                 if chain[0].state == field.state and chain[1].state == field.state and chain[2].state == field.state:
                     return False
 
