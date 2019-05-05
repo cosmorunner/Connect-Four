@@ -23,7 +23,7 @@ class ConnectFour:
             current_player = self.current_turn
             self.print_board()
             while current_player == self.current_turn:
-                position = input(self.players[self.current_turn] + ', place your next token: ')
+                position = input(self.players[self.current_turn] + ', choose a column: ')
                 if position == 'quit':
                     quit()
 
@@ -34,6 +34,7 @@ class ConnectFour:
                 except ValueError as err:
                     print(getattr(err, 'message', str(err)))
 
+        # switch again to player that placed winning token.
         self.switch_current_player()
         self.print_board()
         print('Congratulations, ' + self.get_player() + ', you won!')
@@ -99,35 +100,29 @@ class ConnectFour:
 
         return True
 
-    def place_token(self, position):
-        pos_obj = self.convert_position(position)
-        field = self.get_field(pos_obj['col'], pos_obj['row'])
-        self.validate_position(field)
+    def place_token(self, column):
+        field = self.get_next_field_by_col(column.upper())
         field.state = self.symbols[self.current_turn]
 
-    def convert_position(self, position):
+    def get_next_field_by_col(self, col):
         try:
-            col = position[0:1].upper()
-            row = int(position[1:2])
-            return {'col': col, 'row': row}
+            self.cols.index(col)
         except ValueError:
-            raise ValueError('Position ' + position + ' does not exist.')
+            raise ValueError('Column ' + col + ' does not exist.')
+
+        open_col_fields = list(filter(lambda e: e.col == col and e.state == ' ', self.fields))
+        sorted_col_fields = sorted(open_col_fields, key=lambda x: x.row)
+
+        if len(sorted_col_fields) == 0:
+            raise ValueError('Column ' + col + ' is already full. Please choose another one.')
+
+        return sorted_col_fields[0]
 
     def get_field(self, col, row):
         for field in self.fields:
             if str(field.col) == col and int(field.row) == row:
                 return field
         raise ValueError('Position ' + col + str(row) + ' does not exist.')
-
-    def validate_position(self, field):
-        if field.state != ' ':
-            raise ValueError(
-                'Position ' + field.col + str(field.row) + ' is already taken. Please choose another position.')
-
-        open_col_fields = list(filter(lambda e: e.col == field.col and e.state == ' ', self.fields))
-        sorted_col_fields = sorted(open_col_fields, key=lambda x: x.row)
-        if sorted_col_fields[0].row != field.row:
-            raise ValueError('Position ' + field.col + str(field.row) + ' is invalid. Please choose another position.')
 
     def print_board(self):
         print('')
